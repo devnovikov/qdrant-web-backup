@@ -67,7 +67,7 @@ dependencies {
     implementation("org.latencyutils:LatencyUtils:2.0.3")
 
     // OpenAPI documentation
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.1")
 
     // AWS S3 SDK for storage
     implementation("software.amazon.awssdk:s3:2.29.46")
