@@ -18,6 +18,8 @@ jobs:
     permissions:
       contents: read
       packages: write
+      id-token: write       # Required for OIDC token
+      attestations: write   # Required for attestations
 
     outputs:
       image_tag: ${{ steps.meta.outputs.tags }}
