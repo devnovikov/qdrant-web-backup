@@ -60,7 +60,7 @@ dependencies {
     runtimeOnly("org.postgresql:postgresql")
 
     // HikariCP for connection pooling
-    implementation("com.zaxxer:HikariCP:6.2.1")
+    implementation("com.zaxxer:HikariCP:7.0.2")
 
     // Metrics
     implementation("io.micrometer:micrometer-registry-prometheus")
