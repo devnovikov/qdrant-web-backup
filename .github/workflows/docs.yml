@@ -46,6 +46,22 @@ jobs:
           mkdir -p docs/api
           redocly build-docs api/openapi.yaml -o docs/api/index.html
 
+      - name: Create landing page
+        run: |
+          cat > docs/index.html << 'EOF'
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+              <meta charset="UTF-8">
+              <meta http-equiv="refresh" content="0; url=api/">
+              <title>Qdrant Web Backup - Documentation</title>
+          </head>
+          <body>
+              <p>Redirecting to <a href="api/">API Documentation</a>...</p>
+          </body>
+          </html>
+          EOF
+
       - name: Copy assets
         run: |
           cp README.md docs/

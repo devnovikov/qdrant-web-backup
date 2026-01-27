@@ -3,8 +3,17 @@
 A modern web application for managing Qdrant vector database backups with an intuitive UI, scheduling capabilities, and multi-cloud storage support.
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Build Status](https://img.shields.io/github/actions/workflow/status/your-org/qdrant-web-backup/ci.yml?branch=main)
-![Docker Pulls](https://img.shields.io/docker/pulls/your-org/qdrant-web-backup)
+![Build Status](https://img.shields.io/github/actions/workflow/status/devnovikov/qdrant-web-backup/ci.yml?branch=main)
+![GitHub Release](https://img.shields.io/github/v/release/devnovikov/qdrant-web-backup)
+![Security Scan](https://img.shields.io/github/actions/workflow/status/devnovikov/qdrant-web-backup/security.yml?branch=main&label=Security)
+
+![Kotlin](https://img.shields.io/badge/Kotlin-2.3-7F52FF?logo=kotlin&logoColor=white)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1-6DB33F?logo=springboot&logoColor=white)
+![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
+![TailwindCSS](https://img.shields.io/badge/TailwindCSS-4-06B6D4?logo=tailwindcss&logoColor=white)
+
+![Dependabot](https://img.shields.io/badge/Dependabot-enabled-025E8C?logo=dependabot)
 
 ## Problem Statement
 
@@ -101,7 +110,7 @@ For detailed architecture documentation, see [ARCHITECTURE.md](./ARCHITECTURE.md
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-org/qdrant-web-backup.git
+git clone https://github.com/devnovikov/qdrant-web-backup.git
 cd qdrant-web-backup
 
 # Start all services
@@ -120,7 +129,7 @@ docker run -d \
   -e QDRANT_HOST=your-qdrant-host \
   -e QDRANT_PORT=6333 \
   -e DATABASE_URL=postgresql://user:pass@host:5432/qdrant_backup \
-  ghcr.io/your-org/qdrant-web-backup:latest
+  ghcr.io/devnovikov/qdrant-web-backup:latest
 ```
 
 ### Environment Variables
@@ -262,7 +271,7 @@ version: '3.8'
 
 services:
   app:
-    image: ghcr.io/your-org/qdrant-web-backup:latest
+    image: ghcr.io/devnovikov/qdrant-web-backup:latest
     ports:
       - "8080:8080"
     environment:
