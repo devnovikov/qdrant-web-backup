@@ -2,11 +2,22 @@
 
 A modern web application for managing Qdrant vector database backups with an intuitive UI, scheduling capabilities, and multi-cloud storage support.
 
+<div align="center">
+
+### **[Try Live Demo](https://qdrant-web-backup-production.up.railway.app/)**
+
+[![Live Demo](https://img.shields.io/badge/Live_Demo-Try_Now-brightgreen?style=for-the-badge&logo=railway&logoColor=white)](https://qdrant-web-backup-production.up.railway.app/)
+
+*No installation required - explore all features instantly*
+
+</div>
+
+---
+
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Build Status](https://img.shields.io/github/actions/workflow/status/devnovikov/qdrant-web-backup/ci.yml?branch=main)
 ![GitHub Release](https://img.shields.io/github/v/release/devnovikov/qdrant-web-backup?include_prereleases)
 ![Security Scan](https://img.shields.io/github/actions/workflow/status/devnovikov/qdrant-web-backup/security.yml?branch=main&label=Security)
-[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/template/qdrant-web-backup?referralCode=devnovikov)
 
 ![Kotlin](https://img.shields.io/badge/Kotlin-2.3-7F52FF?logo=kotlin&logoColor=white)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1-6DB33F?logo=springboot&logoColor=white)
