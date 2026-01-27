@@ -6,6 +6,7 @@ A modern web application for managing Qdrant vector database backups with an int
 ![Build Status](https://img.shields.io/github/actions/workflow/status/devnovikov/qdrant-web-backup/ci.yml?branch=main)
 ![GitHub Release](https://img.shields.io/github/v/release/devnovikov/qdrant-web-backup?include_prereleases)
 ![Security Scan](https://img.shields.io/github/actions/workflow/status/devnovikov/qdrant-web-backup/security.yml?branch=main&label=Security)
+[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/template/qdrant-web-backup?referralCode=devnovikov)
 
 ![Kotlin](https://img.shields.io/badge/Kotlin-2.3-7F52FF?logo=kotlin&logoColor=white)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1-6DB33F?logo=springboot&logoColor=white)
@@ -298,6 +299,33 @@ volumes:
 ### Kubernetes
 
 See [deployment/kubernetes/](./deployment/kubernetes/) for Helm charts and manifests.
+
+### Railway
+
+Deploy to [Railway](https://railway.app/) with automatic builds on push to main:
+
+1. **Connect Repository**:
+   - Create a new project in Railway Dashboard
+   - Select "Deploy from GitHub repo"
+   - Choose `devnovikov/qdrant-web-backup`
+   - Railway will automatically detect the Dockerfile
+
+2. **Add PostgreSQL**:
+   - Click "New Service" → "Database" → "PostgreSQL"
+   - Railway provides `DATABASE_URL` automatically
+
+3. **Configure Environment Variables**:
+   ```
+   DATABASE_USER=qdrant
+   DATABASE_PASSWORD=<generated>
+   QDRANT_HOST=<your-qdrant-host>
+   QDRANT_PORT=6333
+   STORAGE_PATH=/app/data/snapshots
+   ```
+
+4. **Deploy**: Push to `main` branch triggers automatic deployment
+
+The project includes a `railway.toml` configuration for optimized builds with health checks.
 
 ### CI/CD
 

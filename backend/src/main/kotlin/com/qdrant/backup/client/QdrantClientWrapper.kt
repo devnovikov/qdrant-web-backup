@@ -22,11 +22,12 @@ import java.time.Instant
 @Component
 class QdrantClientWrapper(
     private val restTemplate: RestTemplate,
+    @Value("\${qdrant.protocol:http}") private val protocol: String,
     @Value("\${qdrant.host:localhost}") private val qdrantHost: String,
     @Value("\${qdrant.port:6333}") private val qdrantPort: Int
 ) {
     private val logger = LoggerFactory.getLogger(QdrantClientWrapper::class.java)
-    private val baseUrl get() = "http://$qdrantHost:$qdrantPort"
+    private val baseUrl get() = "$protocol://$qdrantHost:$qdrantPort"
 
     fun getClusterStatus(): ClusterStatus {
         return try {

@@ -42,6 +42,7 @@ spring:
       path: /h2-console
 
 qdrant:
+  protocol: ${QDRANT_PROTOCOL:http}
   host: ${QDRANT_HOST:localhost}
   port: ${QDRANT_PORT:6333}
   api-key: ${QDRANT_API_KEY:}
@@ -62,6 +63,7 @@ spring:
     password: ${DATABASE_PASSWORD:}
 
 qdrant:
+  protocol: ${QDRANT_PROTOCOL:http}
   host: ${QDRANT_HOST:qdrant}
   port: ${QDRANT_PORT:6333}
   api-key: ${QDRANT_API_KEY:}
