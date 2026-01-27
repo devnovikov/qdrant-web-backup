@@ -6,10 +6,10 @@ import com.qdrant.backup.model.BackupJob
 import com.qdrant.backup.model.JobCreate
 import com.qdrant.backup.model.JobStatus
 import com.qdrant.backup.model.JobType
-import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.javatime.timestamp
-import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.v1.core.*
+import org.jetbrains.exposed.v1.jdbc.*
+import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import org.jetbrains.exposed.v1.javatime.timestamp
 import org.springframework.stereotype.Repository
 import java.time.Instant
 import java.util.*
@@ -51,7 +51,7 @@ class JobRepository(
 
         val items = query
             .orderBy(BackupJobsTable.createdAt, SortOrder.DESC)
-            .limit(limit, ((page - 1) * limit).toLong())
+            .limit(limit).offset(((page - 1) * limit).toLong())
             .map { it.toBackupJob() }
 
         items to total
