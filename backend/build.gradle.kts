@@ -70,7 +70,7 @@ dependencies {
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0")
 
     // AWS S3 SDK for storage
-    implementation("software.amazon.awssdk:s3:2.29.46")
+    implementation("software.amazon.awssdk:s3:2.41.15")
 
     // Testing
     testImplementation("org.springframework.boot:spring-boot-starter-test") {
