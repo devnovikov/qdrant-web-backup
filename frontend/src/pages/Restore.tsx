@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useCollections, useSnapshots, useRecoverSnapshot, useCreateJob } from '@/hooks/useApi';
+import { useCollections, useSnapshots, useCreateJob } from '@/hooks/useApi';
 import {
   Card,
   CardContent,
@@ -46,11 +46,10 @@ export function Restore() {
     apiKey: '',
   });
   const [isRestoring, setIsRestoring] = useState(false);
-  const [restoreComplete, setRestoreComplete] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const { data: collectionsData } = useCollections();
   const { data: snapshotsData } = useSnapshots(formData.collection);
-  const recoverSnapshot = useRecoverSnapshot(formData.collection);
   const createJob = useCreateJob();
 
   const collections = collectionsData?.result?.collections || [];
@@ -70,9 +69,10 @@ export function Restore() {
 
   const handleRestore = async () => {
     setIsRestoring(true);
+    setError(null);
     try {
-      // Create a restore job
-      await createJob.mutateAsync({
+      // Create a restore job - backend will execute the actual restore
+      const response = await createJob.mutateAsync({
         type: 'restore',
         collection_name: formData.collection,
         snapshot_name: formData.source === 'existing' ? formData.existingSnapshot : undefined,
@@ -83,24 +83,12 @@ export function Restore() {
         },
       });
 
-      // If using URL, trigger the actual recovery
-      if (formData.source === 'url' || formData.source === 'existing') {
-        const location =
-          formData.source === 'url'
-            ? formData.snapshotUrl
-            : `/api/v1/collections/${formData.collection}/snapshots/${formData.existingSnapshot}`;
-
-        await recoverSnapshot.mutateAsync({
-          location,
-          priority: formData.priority,
-          api_key: formData.apiKey || undefined,
-        });
-      }
-
-      setRestoreComplete(true);
+      // Redirect to jobs page to monitor progress
+      navigate(`/jobs?highlight=${response.result?.id}`);
     } catch (err) {
       console.error('Restore failed:', err);
-    } finally {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to create restore job. Please try again.';
+      setError(errorMessage);
       setIsRestoring(false);
     }
   };
@@ -123,36 +111,6 @@ export function Restore() {
         return false;
     }
   };
-
-  if (restoreComplete) {
-    return (
-      <div className="max-w-2xl mx-auto">
-        <Card>
-          <CardContent className="pt-12 pb-12">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                <CheckCircle className="h-8 w-8 text-green-600" />
-              </div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                Restore Started Successfully
-              </h2>
-              <p className="text-gray-500 mb-8">
-                Your restore job has been queued. You can monitor its progress in the Jobs page.
-              </p>
-              <div className="flex justify-center gap-4">
-                <Button variant="outline" onClick={() => navigate('/jobs')}>
-                  View Jobs
-                </Button>
-                <Button onClick={() => navigate(`/collections/${formData.collection}`)}>
-                  Go to Collection
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
@@ -414,6 +372,12 @@ export function Restore() {
               This action will overwrite data in the "{formData.collection}" collection.
               This cannot be undone.
             </Alert>
+
+            {error && (
+              <Alert variant="error">
+                {error}
+              </Alert>
+            )}
           </CardContent>
         </Card>
       )}

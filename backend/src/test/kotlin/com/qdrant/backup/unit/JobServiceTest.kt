@@ -39,7 +39,10 @@ class JobServiceTest {
             messagingTemplate,
             backupJobsCounter,
             restoreJobsCounter,
-            failedJobsCounter
+            failedJobsCounter,
+            qdrantProtocol = "http",
+            qdrantHost = "localhost",
+            qdrantPort = 6333
         )
     }
 

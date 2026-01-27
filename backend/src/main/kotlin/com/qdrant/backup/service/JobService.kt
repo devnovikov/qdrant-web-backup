@@ -5,6 +5,7 @@ import com.qdrant.backup.repository.JobRepository
 import io.micrometer.core.instrument.Counter
 import kotlinx.coroutines.*
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.messaging.simp.SimpMessagingTemplate
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
@@ -17,8 +18,12 @@ class JobService(
     private val messagingTemplate: SimpMessagingTemplate,
     private val backupJobsCounter: Counter,
     private val restoreJobsCounter: Counter,
-    private val failedJobsCounter: Counter
+    private val failedJobsCounter: Counter,
+    @Value("\${qdrant.protocol:http}") private val qdrantProtocol: String,
+    @Value("\${qdrant.host:localhost}") private val qdrantHost: String,
+    @Value("\${qdrant.port:6333}") private val qdrantPort: Int
 ) {
+    private val qdrantBaseUrl get() = "$qdrantProtocol://$qdrantHost:$qdrantPort"
     private val logger = LoggerFactory.getLogger(JobService::class.java)
     private val runningJobs = ConcurrentHashMap<String, Job>()
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
@@ -144,8 +149,13 @@ class JobService(
 
     private suspend fun executeRestore(job: BackupJob) {
         val metadata = job.metadata ?: emptyMap()
+        // For existing snapshots on Qdrant server, use the Qdrant API URL directly
+        // For external URLs (S3, HTTP), use as-is
         val location = metadata["url"] as? String
-            ?: job.snapshotName?.let { "/api/v1/collections/${job.collectionName}/snapshots/$it" }
+            ?: job.snapshotName?.let { snapshotName ->
+                // Build full URL to the snapshot on Qdrant server
+                "$qdrantBaseUrl/collections/${job.collectionName}/snapshots/$snapshotName"
+            }
             ?: throw IllegalArgumentException("No restore source specified")
 
         val priority = metadata["priority"] as? String ?: "snapshot"
