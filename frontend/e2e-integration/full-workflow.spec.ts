@@ -48,6 +48,7 @@ test.describe('Full Backup Workflow', () => {
   });
 
   // Skip full navigation test - some pages have rendering issues on navigate
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   test.skip('complete navigation flow', async ({ page }) => {
     // This test is skipped due to React rendering issues on certain pages
     // when using client-side navigation. The individual page tests and API tests

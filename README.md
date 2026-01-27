@@ -34,6 +34,44 @@ Managing backups for Qdrant vector databases in production environments presents
 - **Prometheus Metrics** - Export metrics for monitoring and alerting
 - **Dark Mode** - Modern UI with light/dark theme support
 
+## Screenshots
+
+### Dashboard
+
+The main dashboard provides a comprehensive overview of your Qdrant cluster health, recent backup jobs, and collection statistics.
+
+![Dashboard](screens/01-dashboard.png)
+
+### Collections
+
+Browse all collections with detailed information including vector count, shard distribution, and quick access to backup operations.
+
+![Collections](screens/02-collections.png)
+
+### Collection Details
+
+View detailed collection information including shard distribution across nodes and manage collection-specific snapshots.
+
+![Collection Details](screens/03-collection-detail.png)
+
+### Snapshots
+
+Manage snapshots for each collection with options to download, restore, or delete. View snapshot metadata including size and checksum.
+
+![Snapshots](screens/06-snapshots.png)
+
+### Jobs
+
+Monitor backup and restore job progress with real-time status updates. Filter jobs by type and status, retry failed jobs, or cancel running operations.
+
+![Jobs](screens/04-jobs.png)
+
+### Storage Configuration
+
+Configure multiple storage backends including local filesystem and S3-compatible storage. Test connectivity and set default storage for backups.
+
+![Storage](screens/05-storage.png)
+
 ## Architecture
 
 ```
