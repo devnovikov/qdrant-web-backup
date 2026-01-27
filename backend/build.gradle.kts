@@ -53,7 +53,7 @@ dependencies {
 
     // Qdrant Client (keep for potential gRPC usage)
     implementation("io.qdrant:client:1.16.2")
-    implementation("io.grpc:grpc-netty-shaded:1.68.2")
+    implementation("io.grpc:grpc-netty-shaded:1.78.0")
 
     // Database drivers
     runtimeOnly("com.h2database:h2")
