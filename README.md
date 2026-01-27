@@ -4,7 +4,7 @@ A modern web application for managing Qdrant vector database backups with an int
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Build Status](https://img.shields.io/github/actions/workflow/status/devnovikov/qdrant-web-backup/ci.yml?branch=main)
-![GitHub Release](https://img.shields.io/github/v/release/devnovikov/qdrant-web-backup)
+![GitHub Release](https://img.shields.io/github/v/release/devnovikov/qdrant-web-backup?include_prereleases)
 ![Security Scan](https://img.shields.io/github/actions/workflow/status/devnovikov/qdrant-web-backup/security.yml?branch=main&label=Security)
 
 ![Kotlin](https://img.shields.io/badge/Kotlin-2.3-7F52FF?logo=kotlin&logoColor=white)
