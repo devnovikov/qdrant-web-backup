@@ -77,10 +77,10 @@ dependencies {
         exclude(group = "org.mockito")
     }
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
-    testImplementation("io.mockk:mockk:1.13.13")
-    testImplementation("org.testcontainers:testcontainers:1.20.4")
-    testImplementation("org.testcontainers:postgresql:1.20.4")
-    testImplementation("org.testcontainers:junit-jupiter:1.20.4")
+    testImplementation("io.mockk:mockk:1.14.9")
+    testImplementation("org.testcontainers:testcontainers:2.0.3")
+    testImplementation("org.testcontainers:postgresql:2.0.3")
+    testImplementation("org.testcontainers:junit-jupiter:2.0.3")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
