@@ -1,0 +1,172 @@
+name: CD
+
+on:
+  push:
+    branches: [main]
+    tags:
+      - 'v*'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # ==================== Build and Push Docker Image ====================
+  build-and-push:
+    name: Build and Push Docker Image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    outputs:
+      image_tag: ${{ steps.meta.outputs.tags }}
+      image_digest: ${{ steps.build.outputs.digest }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix=sha-
+
+      - name: Build and push Docker image
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64,linux/arm64
+
+      - name: Generate artifact attestation
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          subject-digest: ${{ steps.build.outputs.digest }}
+          push-to-registry: true
+
+  # ==================== Deploy to Cloud ====================
+  deploy:
+    name: Deploy to Cloud
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+    environment:
+      name: production
+      url: ${{ vars.DEPLOYMENT_URL }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Option 1: Deploy to AWS ECS
+      # Uncomment and configure if using AWS ECS
+      # - name: Configure AWS credentials
+      #   uses: aws-actions/configure-aws-credentials@v4
+      #   with:
+      #     aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      #     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      #     aws-region: ${{ vars.AWS_REGION }}
+      #
+      # - name: Deploy to ECS
+      #   run: |
+      #     aws ecs update-service \
+      #       --cluster ${{ vars.ECS_CLUSTER }} \
+      #       --service ${{ vars.ECS_SERVICE }} \
+      #       --force-new-deployment
+
+      # Option 2: Deploy to Kubernetes
+      # Uncomment and configure if using Kubernetes
+      # - name: Setup kubectl
+      #   uses: azure/setup-kubectl@v4
+      #
+      # - name: Configure kubectl
+      #   run: |
+      #     echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > kubeconfig
+      #     export KUBECONFIG=kubeconfig
+      #
+      # - name: Deploy to Kubernetes
+      #   run: |
+      #     kubectl set image deployment/qdrant-backup \
+      #       app=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ needs.build-and-push.outputs.image_digest }}
+
+      # Option 3: Deploy via SSH
+      # Uncomment and configure if deploying via SSH
+      # - name: Deploy via SSH
+      #   uses: appleboy/ssh-action@v1.0.3
+      #   with:
+      #     host: ${{ secrets.DEPLOY_HOST }}
+      #     username: ${{ secrets.DEPLOY_USER }}
+      #     key: ${{ secrets.DEPLOY_SSH_KEY }}
+      #     script: |
+      #       cd /opt/qdrant-backup
+      #       docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:main
+      #       docker-compose up -d
+
+      - name: Deployment placeholder
+        run: |
+          echo "Deployment configuration needed!"
+          echo "Image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
+          echo "Digest: ${{ needs.build-and-push.outputs.image_digest }}"
+          echo ""
+          echo "Configure one of the deployment options in .github/workflows/cd.yml:"
+          echo "  - AWS ECS"
+          echo "  - Kubernetes"
+          echo "  - SSH deployment"
+
+  # ==================== Create Release ====================
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    needs: [build-and-push, deploy]
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          body: |
+            ## Docker Image
+
+            ```bash
+            docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}
+            ```
+
+            ## Quick Start
+
+            ```bash
+            docker run -d \
+              -p 8080:8080 \
+              -e QDRANT_HOST=your-qdrant-host \
+              -e DATABASE_URL=postgresql://user:pass@host/db \
+              ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}
+            ```
