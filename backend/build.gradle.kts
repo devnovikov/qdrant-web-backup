@@ -91,6 +91,8 @@ tasks.withType<Test> {
 tasks.register<Test>("unitTest") {
     description = "Run unit tests"
     group = "verification"
+    testClassesDirs = sourceSets["test"].output.classesDirs
+    classpath = sourceSets["test"].runtimeClasspath
     useJUnitPlatform {
         includeTags("unit")
     }
@@ -99,6 +101,8 @@ tasks.register<Test>("unitTest") {
 tasks.register<Test>("integrationTest") {
     description = "Run integration tests"
     group = "verification"
+    testClassesDirs = sourceSets["test"].output.classesDirs
+    classpath = sourceSets["test"].runtimeClasspath
     useJUnitPlatform {
         includeTags("integration")
     }

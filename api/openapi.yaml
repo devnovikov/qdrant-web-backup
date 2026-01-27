@@ -34,6 +34,10 @@ tags:
   - name: Metrics
     description: Prometheus metrics
 
+security:
+  - {}
+  - bearerAuth: []
+
 paths:
   /api/v1/cluster:
     get:
@@ -724,6 +728,13 @@ paths:
                 description: Prometheus metrics in text format
 
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT authentication (optional for development)
+
   schemas:
     # Base response wrapper
     BaseResponse:
