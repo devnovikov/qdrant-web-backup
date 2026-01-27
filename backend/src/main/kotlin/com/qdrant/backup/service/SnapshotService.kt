@@ -62,7 +62,7 @@ class SnapshotService(
 
     fun recoverSnapshot(collectionName: String, request: RecoverSnapshotRequest): Boolean {
         logger.info("Recovering collection $collectionName from: ${request.location}")
-        return qdrantClient.recoverSnapshot(collectionName, request.location, request.priority)
+        return qdrantClient.recoverSnapshot(collectionName, request.location, request.priority, request.apiKey)
     }
 
     // Shard snapshot operations

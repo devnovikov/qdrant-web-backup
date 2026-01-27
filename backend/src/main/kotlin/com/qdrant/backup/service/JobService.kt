@@ -21,7 +21,8 @@ class JobService(
     private val failedJobsCounter: Counter,
     @Value("\${qdrant.protocol:http}") private val qdrantProtocol: String,
     @Value("\${qdrant.host:localhost}") private val qdrantHost: String,
-    @Value("\${qdrant.port:6333}") private val qdrantPort: Int
+    @Value("\${qdrant.port:6333}") private val qdrantPort: Int,
+    @Value("\${qdrant.api-key:}") private val qdrantApiKey: String
 ) {
     private val qdrantBaseUrl get() = "$qdrantProtocol://$qdrantHost:$qdrantPort"
     private val logger = LoggerFactory.getLogger(JobService::class.java)
@@ -149,12 +150,12 @@ class JobService(
 
     private suspend fun executeRestore(job: BackupJob) {
         val metadata = job.metadata ?: emptyMap()
-        // For existing snapshots on Qdrant server, use the Qdrant API URL directly
-        // For external URLs (S3, HTTP), use as-is
+        // For external URLs (S3, HTTP), use the provided URL
+        // For local snapshots, use file:// URI (required for Qdrant Cloud which blocks outbound traffic)
         val location = metadata["url"] as? String
             ?: job.snapshotName?.let { snapshotName ->
-                // Build full URL to the snapshot on Qdrant server
-                "$qdrantBaseUrl/collections/${job.collectionName}/snapshots/$snapshotName"
+                // Use file:// URI for local snapshots on Qdrant server
+                "file:///qdrant/snapshots/${job.collectionName}/$snapshotName"
             }
             ?: throw IllegalArgumentException("No restore source specified")
 
@@ -162,9 +163,11 @@ class JobService(
 
         updateProgress(job.id, 10)
 
+        // Pass API key for URL-based recovery that requires authentication
+        val apiKey = qdrantApiKey.takeIf { it.isNotBlank() }
         snapshotService.recoverSnapshot(
             job.collectionName,
-            RecoverSnapshotRequest(location, priority)
+            RecoverSnapshotRequest(location, priority, apiKey)
         )
 
         updateProgress(job.id, 100)

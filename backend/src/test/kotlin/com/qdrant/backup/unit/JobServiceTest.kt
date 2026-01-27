@@ -42,7 +42,8 @@ class JobServiceTest {
             failedJobsCounter,
             qdrantProtocol = "http",
             qdrantHost = "localhost",
-            qdrantPort = 6333
+            qdrantPort = 6333,
+            qdrantApiKey = "test-api-key"
         )
     }
 

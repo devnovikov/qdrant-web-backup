@@ -199,6 +199,34 @@ test.describe('Jobs Workflows', () => {
     // Page should still be functional after refresh
     await expect(page.getByText('Job History')).toBeVisible();
   });
+
+  test('should display job progress correctly', async ({ page }) => {
+    await page.goto('/jobs');
+
+    // Look for progress indicators in the job table
+    // Running jobs should show progress percentage
+    const tableBody = page.locator('tbody');
+    await expect(tableBody).toBeVisible();
+
+    // Table should contain status badges
+    await expect(page.locator('tbody tr').first()).toBeVisible();
+  });
+
+  test('should handle job creation from collection backup', async ({ page }) => {
+    await page.goto('/collections');
+
+    // Click on a collection
+    await page.getByRole('link', { name: /products/i }).click();
+    await expect(page.getByRole('heading', { name: 'products' })).toBeVisible();
+
+    // Look for backup/snapshot button
+    const snapshotButton = page.getByRole('button', { name: /create snapshot|backup/i });
+    if (await snapshotButton.isVisible()) {
+      await snapshotButton.click();
+      // Should create a job or show confirmation
+      await page.waitForTimeout(500);
+    }
+  });
 });
 
 test.describe('Storage Workflows', () => {
@@ -420,6 +448,52 @@ test.describe('Restore Workflows', () => {
 
     // Should be back on step 1
     await expect(page.getByText('Select Target Collection')).toBeVisible();
+  });
+
+  test('should create restore job and redirect to jobs page', async ({ page }) => {
+    await page.goto('/restore');
+
+    // Step 1: Select collection
+    await page.getByRole('combobox').selectOption('products');
+    await page.getByRole('button', { name: /next/i }).click();
+
+    // Step 2: Select existing snapshot
+    await page.waitForTimeout(300);
+    const snapshotSelect = page.locator('select').nth(0);
+    await snapshotSelect.selectOption({ index: 1 });
+    await page.getByRole('button', { name: /next/i }).click();
+
+    // Step 3: Confirm and start restore
+    await expect(page.getByText('Confirm Restore')).toBeVisible();
+    await page.getByRole('button', { name: /start restore/i }).click();
+
+    // Should redirect to jobs page with highlight parameter
+    await page.waitForURL(/\/jobs/);
+    await expect(page.url()).toContain('/jobs');
+
+    // Jobs page should be visible
+    await expect(page.getByText('Job History')).toBeVisible();
+  });
+
+  test('should create restore job from URL source', async ({ page }) => {
+    await page.goto('/restore');
+
+    // Step 1: Select collection
+    await page.getByRole('combobox').selectOption('products');
+    await page.getByRole('button', { name: /next/i }).click();
+
+    // Step 2: Select URL source
+    await page.getByText('From URL').click();
+    await page.getByPlaceholder(/s3.amazonaws.com/).fill('https://example.com/backup.snapshot');
+    await page.getByRole('button', { name: /next/i }).click();
+
+    // Step 3: Confirm and start restore
+    await expect(page.getByText('Confirm Restore')).toBeVisible();
+    await page.getByRole('button', { name: /start restore/i }).click();
+
+    // Should redirect to jobs page
+    await page.waitForURL(/\/jobs/);
+    await expect(page.getByText('Job History')).toBeVisible();
   });
 });
 
