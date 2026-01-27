@@ -1,0 +1,1362 @@
+openapi: 3.1.0
+info:
+  title: Qdrant Web Backup API
+  description: |
+    REST API for managing Qdrant vector database backups.
+    Provides endpoints for cluster monitoring, collection management,
+    snapshot operations, storage configuration, and job tracking.
+  version: 1.0.0
+  contact:
+    name: API Support
+  license:
+    name: MIT
+    identifier: MIT
+
+servers:
+  - url: http://localhost:8080
+    description: Development server
+  - url: https://api.qdrant-backup.example.com
+    description: Production server
+
+tags:
+  - name: Cluster
+    description: Cluster health and node management
+  - name: Collections
+    description: Collection listing and details
+  - name: Snapshots
+    description: Collection snapshot operations
+  - name: Shard Snapshots
+    description: Per-shard snapshot operations for distributed mode
+  - name: Storage
+    description: Backup storage configuration
+  - name: Jobs
+    description: Backup and restore job management
+  - name: Metrics
+    description: Prometheus metrics
+
+paths:
+  /api/v1/cluster:
+    get:
+      tags:
+        - Cluster
+      summary: Get cluster status
+      description: Returns current cluster health, Raft consensus info, and peer details
+      operationId: getClusterStatus
+      responses:
+        '200':
+          description: Cluster status retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClusterStatusResponse'
+        '503':
+          description: Qdrant cluster unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/cluster/nodes:
+    get:
+      tags:
+        - Cluster
+      summary: Get cluster nodes
+      description: Returns list of all nodes in the Qdrant cluster with their status
+      operationId: getClusterNodes
+      responses:
+        '200':
+          description: Node list retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClusterNodesResponse'
+        '503':
+          description: Qdrant cluster unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/collections:
+    get:
+      tags:
+        - Collections
+      summary: List all collections
+      description: Returns list of all collections in the Qdrant cluster
+      operationId: listCollections
+      responses:
+        '200':
+          description: Collections list retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CollectionsListResponse'
+        '503':
+          description: Qdrant cluster unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/collections/{name}:
+    get:
+      tags:
+        - Collections
+      summary: Get collection details
+      description: Returns detailed information about a specific collection
+      operationId: getCollection
+      parameters:
+        - name: name
+          in: path
+          required: true
+          description: Collection name
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Collection details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CollectionDetailResponse'
+        '404':
+          description: Collection not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/collections/{name}/cluster:
+    get:
+      tags:
+        - Collections
+      summary: Get collection cluster info
+      description: Returns shard distribution and cluster info for a collection
+      operationId: getCollectionClusterInfo
+      parameters:
+        - name: name
+          in: path
+          required: true
+          description: Collection name
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Collection cluster info retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CollectionClusterInfoResponse'
+        '404':
+          description: Collection not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/collections/{name}/snapshots:
+    get:
+      tags:
+        - Snapshots
+      summary: List collection snapshots
+      description: Returns all snapshots for a specific collection
+      operationId: listSnapshots
+      parameters:
+        - name: name
+          in: path
+          required: true
+          description: Collection name
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Snapshots list retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SnapshotsListResponse'
+        '404':
+          description: Collection not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      tags:
+        - Snapshots
+      summary: Create collection snapshot
+      description: Creates a new snapshot for the specified collection
+      operationId: createSnapshot
+      parameters:
+        - name: name
+          in: path
+          required: true
+          description: Collection name
+          schema:
+            type: string
+        - name: wait
+          in: query
+          required: false
+          description: Wait for snapshot creation to complete
+          schema:
+            type: boolean
+            default: true
+      responses:
+        '200':
+          description: Snapshot created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SnapshotResponse'
+        '404':
+          description: Collection not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Snapshot creation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/collections/{name}/snapshots/{snapshotName}:
+    get:
+      tags:
+        - Snapshots
+      summary: Download snapshot
+      description: Downloads a snapshot file
+      operationId: downloadSnapshot
+      parameters:
+        - name: name
+          in: path
+          required: true
+          description: Collection name
+          schema:
+            type: string
+        - name: snapshotName
+          in: path
+          required: true
+          description: Snapshot name
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Snapshot file stream
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Snapshot not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      tags:
+        - Snapshots
+      summary: Delete snapshot
+      description: Deletes a snapshot from the collection
+      operationId: deleteSnapshot
+      parameters:
+        - name: name
+          in: path
+          required: true
+          description: Collection name
+          schema:
+            type: string
+        - name: snapshotName
+          in: path
+          required: true
+          description: Snapshot name
+          schema:
+            type: string
+        - name: wait
+          in: query
+          required: false
+          description: Wait for deletion to complete
+          schema:
+            type: boolean
+            default: true
+      responses:
+        '200':
+          description: Snapshot deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteResponse'
+        '404':
+          description: Snapshot not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/collections/{name}/snapshots/recover:
+    post:
+      tags:
+        - Snapshots
+      summary: Recover collection from snapshot
+      description: Restores a collection from a snapshot URL or local file
+      operationId: recoverSnapshot
+      parameters:
+        - name: name
+          in: path
+          required: true
+          description: Collection name
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecoverSnapshotRequest'
+      responses:
+        '200':
+          description: Recovery started successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecoverResponse'
+        '400':
+          description: Invalid recovery parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Collection not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/collections/{name}/shards/{shardId}/snapshots:
+    get:
+      tags:
+        - Shard Snapshots
+      summary: List shard snapshots
+      description: Returns all snapshots for a specific shard
+      operationId: listShardSnapshots
+      parameters:
+        - name: name
+          in: path
+          required: true
+          description: Collection name
+          schema:
+            type: string
+        - name: shardId
+          in: path
+          required: true
+          description: Shard ID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Shard snapshots list retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SnapshotsListResponse'
+        '404':
+          description: Collection or shard not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      tags:
+        - Shard Snapshots
+      summary: Create shard snapshot
+      description: Creates a snapshot for a specific shard
+      operationId: createShardSnapshot
+      parameters:
+        - name: name
+          in: path
+          required: true
+          description: Collection name
+          schema:
+            type: string
+        - name: shardId
+          in: path
+          required: true
+          description: Shard ID
+          schema:
+            type: integer
+        - name: wait
+          in: query
+          required: false
+          description: Wait for snapshot creation to complete
+          schema:
+            type: boolean
+            default: true
+      responses:
+        '200':
+          description: Shard snapshot created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SnapshotResponse'
+        '404':
+          description: Collection or shard not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/storage/config:
+    get:
+      tags:
+        - Storage
+      summary: Get storage configurations
+      description: Returns all configured storage backends
+      operationId: getStorageConfig
+      responses:
+        '200':
+          description: Storage configurations retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StorageConfigListResponse'
+
+    post:
+      tags:
+        - Storage
+      summary: Create storage configuration
+      description: Creates a new storage backend configuration
+      operationId: createStorageConfig
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StorageConfigCreate'
+      responses:
+        '200':
+          description: Storage configuration created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StorageConfigResponse'
+        '400':
+          description: Invalid configuration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/storage/config/{id}:
+    put:
+      tags:
+        - Storage
+      summary: Update storage configuration
+      description: Updates an existing storage backend configuration
+      operationId: updateStorageConfig
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Storage configuration ID
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StorageConfigUpdate'
+      responses:
+        '200':
+          description: Storage configuration updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StorageConfigResponse'
+        '404':
+          description: Configuration not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      tags:
+        - Storage
+      summary: Delete storage configuration
+      description: Deletes a storage backend configuration
+      operationId: deleteStorageConfig
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Storage configuration ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Storage configuration deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteResponse'
+        '400':
+          description: Cannot delete default configuration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Configuration not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/storage/test:
+    post:
+      tags:
+        - Storage
+      summary: Test storage connectivity
+      description: Tests connectivity to a storage backend without saving
+      operationId: testStorageConnectivity
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StorageConfigCreate'
+      responses:
+        '200':
+          description: Connectivity test completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StorageTestResponse'
+
+  /api/v1/jobs:
+    get:
+      tags:
+        - Jobs
+      summary: List jobs
+      description: Returns paginated list of backup and restore jobs
+      operationId: listJobs
+      parameters:
+        - name: status
+          in: query
+          required: false
+          description: Filter by job status
+          schema:
+            $ref: '#/components/schemas/JobStatus'
+        - name: type
+          in: query
+          required: false
+          description: Filter by job type
+          schema:
+            $ref: '#/components/schemas/JobType'
+        - name: page
+          in: query
+          required: false
+          description: Page number (1-indexed)
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          required: false
+          description: Items per page
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: Jobs list retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobsListResponse'
+
+    post:
+      tags:
+        - Jobs
+      summary: Create job
+      description: Creates a new backup or restore job
+      operationId: createJob
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JobCreate'
+      responses:
+        '200':
+          description: Job created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobResponse'
+        '400':
+          description: Invalid job parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/jobs/{id}:
+    get:
+      tags:
+        - Jobs
+      summary: Get job details
+      description: Returns detailed information about a specific job
+      operationId: getJob
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Job ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Job details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobResponse'
+        '404':
+          description: Job not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/jobs/{id}/cancel:
+    post:
+      tags:
+        - Jobs
+      summary: Cancel job
+      description: Cancels a pending or running job
+      operationId: cancelJob
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Job ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Job cancelled successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobResponse'
+        '400':
+          description: Job cannot be cancelled (already completed or failed)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Job not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/jobs/{id}/retry:
+    post:
+      tags:
+        - Jobs
+      summary: Retry job
+      description: Retries a failed or cancelled job
+      operationId: retryJob
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Job ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Job retry started successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobResponse'
+        '400':
+          description: Job cannot be retried (still running or pending)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Job not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/metrics:
+    get:
+      tags:
+        - Metrics
+      summary: Get Prometheus metrics
+      description: Returns metrics in Prometheus exposition format
+      operationId: getMetrics
+      responses:
+        '200':
+          description: Metrics retrieved successfully
+          content:
+            text/plain:
+              schema:
+                type: string
+                description: Prometheus metrics in text format
+
+components:
+  schemas:
+    # Base response wrapper
+    BaseResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [ok]
+        time:
+          type: number
+          format: float
+          description: Request processing time in seconds
+      required:
+        - status
+        - time
+
+    ErrorResponse:
+      type: object
+      properties:
+        status:
+          type: object
+          properties:
+            error:
+              type: string
+              description: Error message
+          required:
+            - error
+        time:
+          type: number
+          format: float
+      required:
+        - status
+        - time
+
+    DeleteResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            result:
+              type: boolean
+              description: True if deletion was successful
+
+    # Cluster schemas
+    ClusterStatus:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [green, yellow, red]
+          description: Overall cluster health status
+        peer_id:
+          type: integer
+          description: Current node's peer ID
+        peers:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/PeerInfo'
+          description: Map of peer ID to peer info
+        raft_info:
+          $ref: '#/components/schemas/RaftInfo'
+      required:
+        - status
+        - peer_id
+        - peers
+        - raft_info
+
+    PeerInfo:
+      type: object
+      properties:
+        uri:
+          type: string
+          format: uri
+          description: Peer URI
+      required:
+        - uri
+
+    RaftInfo:
+      type: object
+      properties:
+        term:
+          type: integer
+          description: Current Raft term
+        commit:
+          type: integer
+          description: Last committed log index
+        pending_operations:
+          type: integer
+          description: Number of pending operations
+        leader:
+          type: integer
+          description: Current leader peer ID
+        role:
+          type: string
+          enum: [Leader, Follower]
+          description: Current node's role
+        is_voter:
+          type: boolean
+          description: Whether this node can vote
+      required:
+        - term
+        - commit
+        - pending_operations
+        - leader
+        - role
+        - is_voter
+
+    ClusterStatusResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            result:
+              $ref: '#/components/schemas/ClusterStatus'
+
+    ClusterNode:
+      type: object
+      properties:
+        peer_id:
+          type: integer
+          description: Node's peer ID
+        uri:
+          type: string
+          format: uri
+          description: Node URI
+        is_leader:
+          type: boolean
+          description: Whether this node is the leader
+        shards_count:
+          type: integer
+          description: Number of shards on this node
+      required:
+        - peer_id
+        - uri
+        - is_leader
+        - shards_count
+
+    ClusterNodesResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            result:
+              type: array
+              items:
+                $ref: '#/components/schemas/ClusterNode'
+
+    # Collection schemas
+    CollectionInfo:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Collection name
+      required:
+        - name
+
+    CollectionsList:
+      type: object
+      properties:
+        collections:
+          type: array
+          items:
+            $ref: '#/components/schemas/CollectionInfo'
+      required:
+        - collections
+
+    CollectionsListResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            result:
+              $ref: '#/components/schemas/CollectionsList'
+
+    CollectionDetail:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Collection name
+        status:
+          type: string
+          enum: [green, yellow, red]
+          description: Collection health status
+        vectors_count:
+          type: integer
+          description: Total number of vectors
+        points_count:
+          type: integer
+          description: Total number of points
+        segments_count:
+          type: integer
+          description: Number of segments
+        config:
+          $ref: '#/components/schemas/CollectionConfig'
+      required:
+        - name
+        - status
+        - vectors_count
+        - points_count
+        - segments_count
+        - config
+
+    CollectionConfig:
+      type: object
+      properties:
+        params:
+          type: object
+          properties:
+            shard_number:
+              type: integer
+              description: Number of shards
+            replication_factor:
+              type: integer
+              description: Replication factor
+        hnsw_config:
+          type: object
+          description: HNSW index configuration
+        optimizer_config:
+          type: object
+          description: Optimizer configuration
+        wal_config:
+          type: object
+          description: Write-ahead log configuration
+
+    CollectionDetailResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            result:
+              $ref: '#/components/schemas/CollectionDetail'
+
+    CollectionClusterInfo:
+      type: object
+      properties:
+        peer_id:
+          type: integer
+          description: Current node's peer ID
+        shard_count:
+          type: integer
+          description: Total number of shards
+        local_shards:
+          type: array
+          items:
+            $ref: '#/components/schemas/LocalShard'
+          description: Shards hosted on this node
+        remote_shards:
+          type: array
+          items:
+            $ref: '#/components/schemas/RemoteShard'
+          description: Shards on other nodes
+      required:
+        - peer_id
+        - shard_count
+        - local_shards
+        - remote_shards
+
+    LocalShard:
+      type: object
+      properties:
+        shard_id:
+          type: integer
+          description: Shard ID
+        points_count:
+          type: integer
+          description: Number of points in shard
+        state:
+          type: string
+          enum: [Active, Dead, Partial, Initializing, Listener]
+          description: Shard state
+      required:
+        - shard_id
+        - points_count
+        - state
+
+    RemoteShard:
+      type: object
+      properties:
+        shard_id:
+          type: integer
+          description: Shard ID
+        peer_id:
+          type: integer
+          description: Peer ID hosting this shard
+        state:
+          type: string
+          enum: [Active, Dead, Partial, Initializing, Listener]
+          description: Shard state
+      required:
+        - shard_id
+        - peer_id
+        - state
+
+    CollectionClusterInfoResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            result:
+              $ref: '#/components/schemas/CollectionClusterInfo'
+
+    # Snapshot schemas
+    Snapshot:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Snapshot filename
+        creation_time:
+          type: string
+          format: date-time
+          description: Snapshot creation timestamp
+        size:
+          type: integer
+          description: Snapshot size in bytes
+        checksum:
+          type: string
+          description: Snapshot checksum
+      required:
+        - name
+        - creation_time
+        - size
+
+    SnapshotsListResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            result:
+              type: array
+              items:
+                $ref: '#/components/schemas/Snapshot'
+
+    SnapshotResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            result:
+              $ref: '#/components/schemas/Snapshot'
+
+    RecoverSnapshotRequest:
+      type: object
+      properties:
+        location:
+          type: string
+          description: Snapshot URL (S3, HTTP, or file://)
+        priority:
+          type: string
+          enum: [replica, snapshot, no_sync]
+          default: snapshot
+          description: Recovery priority for conflict resolution
+        api_key:
+          type: string
+          description: Optional API key for authenticated URLs
+      required:
+        - location
+
+    RecoverResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            result:
+              type: boolean
+              description: True if recovery started successfully
+
+    # Storage schemas
+    StorageType:
+      type: string
+      enum: [local, s3]
+      description: Storage backend type
+
+    StorageConfig:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Configuration ID
+        name:
+          type: string
+          description: Configuration name
+        type:
+          $ref: '#/components/schemas/StorageType'
+        path:
+          type: string
+          description: Local filesystem path (for local type)
+        s3_endpoint:
+          type: string
+          format: uri
+          description: S3 endpoint URL (for s3 type)
+        s3_bucket:
+          type: string
+          description: S3 bucket name (for s3 type)
+        s3_region:
+          type: string
+          description: S3 region (for s3 type)
+        s3_access_key:
+          type: string
+          description: S3 access key (masked in responses)
+        is_default:
+          type: boolean
+          description: Whether this is the default storage
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+      required:
+        - id
+        - name
+        - type
+        - is_default
+        - created_at
+        - updated_at
+
+    StorageConfigCreate:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Configuration name
+        type:
+          $ref: '#/components/schemas/StorageType'
+        path:
+          type: string
+          description: Local filesystem path (required for local type)
+        s3_endpoint:
+          type: string
+          format: uri
+          description: S3 endpoint URL (required for s3 type)
+        s3_bucket:
+          type: string
+          description: S3 bucket name (required for s3 type)
+        s3_region:
+          type: string
+          description: S3 region (required for s3 type)
+        s3_access_key:
+          type: string
+          description: S3 access key (required for s3 type)
+        s3_secret_key:
+          type: string
+          description: S3 secret key (required for s3 type)
+        is_default:
+          type: boolean
+          default: false
+          description: Set as default storage
+      required:
+        - name
+        - type
+
+    StorageConfigUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Configuration name
+        path:
+          type: string
+          description: Local filesystem path
+        s3_endpoint:
+          type: string
+          format: uri
+          description: S3 endpoint URL
+        s3_bucket:
+          type: string
+          description: S3 bucket name
+        s3_region:
+          type: string
+          description: S3 region
+        s3_access_key:
+          type: string
+          description: S3 access key
+        s3_secret_key:
+          type: string
+          description: S3 secret key
+        is_default:
+          type: boolean
+          description: Set as default storage
+
+    StorageConfigListResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            result:
+              type: array
+              items:
+                $ref: '#/components/schemas/StorageConfig'
+
+    StorageConfigResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            result:
+              $ref: '#/components/schemas/StorageConfig'
+
+    StorageTestResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Whether connectivity test passed
+        message:
+          type: string
+          description: Test result message
+      required:
+        - success
+
+    StorageTestResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            result:
+              $ref: '#/components/schemas/StorageTestResult'
+
+    # Job schemas
+    JobStatus:
+      type: string
+      enum: [pending, running, completed, failed, cancelled]
+      description: Job execution status
+
+    JobType:
+      type: string
+      enum: [backup, restore, shard_backup, shard_restore]
+      description: Job type
+
+    Job:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Job ID
+        type:
+          $ref: '#/components/schemas/JobType'
+        status:
+          $ref: '#/components/schemas/JobStatus'
+        collection_name:
+          type: string
+          description: Target collection name
+        shard_id:
+          type: integer
+          description: Target shard ID (for shard operations)
+        snapshot_name:
+          type: string
+          description: Snapshot name
+        progress:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Job progress percentage
+        error:
+          type: string
+          description: Error message (if failed)
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Additional job metadata
+        created_at:
+          type: string
+          format: date-time
+          description: Job creation timestamp
+        started_at:
+          type: string
+          format: date-time
+          description: Job start timestamp
+        completed_at:
+          type: string
+          format: date-time
+          description: Job completion timestamp
+      required:
+        - id
+        - type
+        - status
+        - collection_name
+        - progress
+        - created_at
+
+    JobCreate:
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/JobType'
+        collection_name:
+          type: string
+          description: Target collection name
+        shard_id:
+          type: integer
+          description: Target shard ID (for shard operations)
+        snapshot_name:
+          type: string
+          description: Snapshot name (for restore operations)
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Additional job metadata
+      required:
+        - type
+        - collection_name
+
+    JobsListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Job'
+        total:
+          type: integer
+          description: Total number of jobs matching filters
+        page:
+          type: integer
+          description: Current page number
+        limit:
+          type: integer
+          description: Items per page
+      required:
+        - items
+        - total
+        - page
+        - limit
+
+    JobResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            result:
+              $ref: '#/components/schemas/Job'

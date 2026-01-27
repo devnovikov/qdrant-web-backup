@@ -1,0 +1,32 @@
+# Git
+.git
+.gitignore
+
+# IDE
+.idea
+.vscode
+*.iml
+
+# Documentation
+*.md
+!README.md
+
+# Frontend
+frontend/node_modules
+frontend/dist
+frontend/.env
+frontend/.env.local
+frontend/test-results
+frontend/playwright-report
+
+# Backend
+backend/build
+backend/.gradle
+backend/data
+
+# Docker
+docker-compose*.yml
+
+# Misc
+.DS_Store
+*.log
