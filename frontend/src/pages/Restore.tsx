@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useCollections, useSnapshots, useCreateJob } from '@/hooks/useApi';
+import { useCollections, useSnapshots, useCreateJob, useCapabilities } from '@/hooks/useApi';
 import {
   Card,
   CardContent,
@@ -50,7 +50,10 @@ export function Restore() {
 
   const { data: collectionsData } = useCollections();
   const { data: snapshotsData } = useSnapshots(formData.collection);
+  const { data: capabilitiesData } = useCapabilities();
   const createJob = useCreateJob();
+
+  const isCloud = capabilitiesData?.result?.isCloud ?? false;
 
   const collections = collectionsData?.result?.collections || [];
   const snapshots = snapshotsData?.result || [];
@@ -201,7 +204,7 @@ export function Restore() {
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Source Type Selection */}
-            <div className="grid grid-cols-3 gap-4">
+            <div className={`grid gap-4 ${isCloud ? 'grid-cols-2' : 'grid-cols-3'}`}>
               <button
                 type="button"
                 onClick={() => setFormData({ ...formData, source: 'existing' })}
@@ -216,19 +219,21 @@ export function Restore() {
                 <p className="text-sm text-gray-500">Use a snapshot from this collection</p>
               </button>
 
-              <button
-                type="button"
-                onClick={() => setFormData({ ...formData, source: 'url' })}
-                className={`p-4 rounded-lg border-2 text-left transition-colors ${
-                  formData.source === 'url'
-                    ? 'border-red-500 bg-red-50'
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}
-              >
-                <LinkIcon className="h-6 w-6 text-gray-600 mb-2" />
-                <p className="font-medium">From URL</p>
-                <p className="text-sm text-gray-500">Restore from S3 or HTTP URL</p>
-              </button>
+              {!isCloud && (
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, source: 'url' })}
+                  className={`p-4 rounded-lg border-2 text-left transition-colors ${
+                    formData.source === 'url'
+                      ? 'border-red-500 bg-red-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <LinkIcon className="h-6 w-6 text-gray-600 mb-2" />
+                  <p className="font-medium">From URL</p>
+                  <p className="text-sm text-gray-500">Restore from S3 or HTTP URL</p>
+                </button>
+              )}
 
               <button
                 type="button"
@@ -245,6 +250,12 @@ export function Restore() {
                 <p className="text-sm text-gray-400">Coming soon</p>
               </button>
             </div>
+
+            {isCloud && (
+              <Alert>
+                Running in Qdrant Cloud mode. URL-based restore is not available as Qdrant Cloud blocks outbound HTTP requests.
+              </Alert>
+            )}
 
             {/* Source-specific inputs */}
             {formData.source === 'existing' && (

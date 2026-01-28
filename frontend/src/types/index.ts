@@ -1,3 +1,8 @@
+// System Capabilities
+export interface QdrantCapabilities {
+  isCloud: boolean;
+}
+
 // Cluster Types
 export interface ClusterStatus {
   status: 'green' | 'yellow' | 'red';

@@ -47,6 +47,7 @@ qdrant:
   port: ${QDRANT_PORT:6333}
   api-key: ${QDRANT_API_KEY:}
   use-tls: ${QDRANT_USE_TLS:false}
+  cloud: ${QDRANT_CLOUD:false}
 
 storage:
   default-path: ${STORAGE_PATH:./data/snapshots}
@@ -68,6 +69,7 @@ qdrant:
   port: ${QDRANT_PORT:6333}
   api-key: ${QDRANT_API_KEY:}
   use-tls: ${QDRANT_USE_TLS:false}
+  cloud: ${QDRANT_CLOUD:false}
 
 storage:
   default-path: ${STORAGE_PATH:/var/qdrant/snapshots}

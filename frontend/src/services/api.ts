@@ -17,6 +17,7 @@ import type {
   JobCreate,
   ApiResponse,
   PaginatedResponse,
+  QdrantCapabilities,
 } from '@/types';
 
 const API_BASE = '/api/v1';
@@ -64,6 +65,13 @@ async function request<T>(
 
   return JSON.parse(text) as T;
 }
+
+// ==================== System API ====================
+
+export const systemApi = {
+  getCapabilities: (): Promise<ApiResponse<QdrantCapabilities>> =>
+    request('/system/capabilities'),
+};
 
 // ==================== Cluster API ====================
 
@@ -256,6 +264,7 @@ export const metricsApi = {
 
 // Export default API object
 export const api = {
+  system: systemApi,
   cluster: clusterApi,
   collections: collectionsApi,
   snapshots: snapshotsApi,

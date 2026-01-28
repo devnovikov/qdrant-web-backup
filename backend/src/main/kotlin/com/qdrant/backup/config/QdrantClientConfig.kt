@@ -10,10 +10,12 @@ import java.time.Duration
 
 @ConfigurationProperties(prefix = "qdrant")
 data class QdrantProperties(
+    val protocol: String = "http",
     val host: String = "localhost",
     val port: Int = 6333,
     val apiKey: String? = null,
     val useTls: Boolean = false,
+    val cloud: Boolean = false,
     val connectTimeout: Duration = Duration.ofSeconds(10),
     val readTimeout: Duration = Duration.ofMinutes(5)
 )

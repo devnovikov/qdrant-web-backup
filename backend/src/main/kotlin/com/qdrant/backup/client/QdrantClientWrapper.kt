@@ -1,12 +1,11 @@
 package com.qdrant.backup.client
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.qdrant.backup.config.QdrantProperties
 import com.qdrant.backup.model.*
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.core.io.Resource
 import org.springframework.http.HttpMethod
-import org.springframework.http.MediaType
 import org.springframework.stereotype.Component
 import org.springframework.web.client.RestTemplate
 import org.springframework.web.client.exchange
@@ -22,13 +21,12 @@ import java.time.Instant
 @Component
 class QdrantClientWrapper(
     private val restTemplate: RestTemplate,
-    @Value("\${qdrant.protocol:http}") private val protocol: String,
-    @Value("\${qdrant.host:localhost}") private val qdrantHost: String,
-    @Value("\${qdrant.port:6333}") private val qdrantPort: Int,
-    @Value("\${qdrant.api-key:}") private val qdrantApiKey: String
+    private val qdrantProperties: QdrantProperties
 ) {
     private val logger = LoggerFactory.getLogger(QdrantClientWrapper::class.java)
-    private val baseUrl get() = "$protocol://$qdrantHost:$qdrantPort"
+    private val baseUrl get() = "${qdrantProperties.protocol}://${qdrantProperties.host}:${qdrantProperties.port}"
+
+    fun isCloud(): Boolean = qdrantProperties.cloud
 
     fun getClusterStatus(): ClusterStatus {
         return try {
@@ -230,7 +228,7 @@ class QdrantClientWrapper(
                 "priority" to priority
             )
             // Add API key for URL-based recovery that requires authentication
-            val effectiveApiKey = apiKey ?: qdrantApiKey.takeIf { it.isNotBlank() }
+            val effectiveApiKey = apiKey ?: qdrantProperties.apiKey?.takeIf { it.isNotBlank() }
             effectiveApiKey?.let { request["api_key"] = it }
 
             restTemplate.put(url, request)

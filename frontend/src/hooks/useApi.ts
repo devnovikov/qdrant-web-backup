@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
+  systemApi,
   clusterApi,
   collectionsApi,
   snapshotsApi,
@@ -11,6 +12,7 @@ import type { SnapshotRecover, StorageConfigCreate, JobCreate } from '@/types';
 
 // Query Keys
 export const queryKeys = {
+  capabilities: ['capabilities'] as const,
   cluster: ['cluster'] as const,
   clusterNodes: ['cluster', 'nodes'] as const,
   collections: ['collections'] as const,
@@ -24,6 +26,16 @@ export const queryKeys = {
     ['jobs', filters] as const,
   job: (id: string) => ['jobs', id] as const,
 };
+
+// ==================== System Hooks ====================
+
+export function useCapabilities() {
+  return useQuery({
+    queryKey: queryKeys.capabilities,
+    queryFn: () => systemApi.getCapabilities(),
+    staleTime: Infinity, // Capabilities don't change during runtime
+  });
+}
 
 // ==================== Cluster Hooks ====================
 
