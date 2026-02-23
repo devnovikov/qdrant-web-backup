@@ -52,7 +52,7 @@ dependencies {
     implementation("org.jetbrains.exposed:exposed-json:1.0.0")
 
     // Qdrant Client (keep for potential gRPC usage)
-    implementation("io.qdrant:client:1.16.2")
+    implementation("io.qdrant:client:1.17.0")
     implementation("io.grpc:grpc-netty-shaded:1.68.2")
 
     // Database drivers
