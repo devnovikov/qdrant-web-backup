@@ -45,11 +45,11 @@ dependencies {
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
 
     // Kotlin Exposed ORM (without Spring Boot Starter for compatibility with Spring Boot 4.x)
-    implementation("org.jetbrains.exposed:exposed-core:1.0.0")
-    implementation("org.jetbrains.exposed:exposed-dao:1.0.0")
-    implementation("org.jetbrains.exposed:exposed-jdbc:1.0.0")
-    implementation("org.jetbrains.exposed:exposed-java-time:1.0.0")
-    implementation("org.jetbrains.exposed:exposed-json:1.0.0")
+    implementation("org.jetbrains.exposed:exposed-core:1.1.1")
+    implementation("org.jetbrains.exposed:exposed-dao:1.1.1")
+    implementation("org.jetbrains.exposed:exposed-jdbc:1.1.1")
+    implementation("org.jetbrains.exposed:exposed-java-time:1.1.1")
+    implementation("org.jetbrains.exposed:exposed-json:1.1.1")
 
     // Qdrant Client (keep for potential gRPC usage)
     implementation("io.qdrant:client:1.16.2")
